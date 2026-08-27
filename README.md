@@ -1,70 +1,74 @@
-# DevClient — Expo Dev Client (iOS)
+# 🇲🇦 Darija — Apprends le marocain gratuitement
 
-Application native installée **une seule fois** sur ton iPhone via EAS Build.
-Une fois installée, elle sert de "conteneur" pour charger/tester n'importe
-quel projet Expo/React Native en te connectant à un serveur Metro — plus
-besoin de Mac/Xcode pour itérer au quotidien.
+Application web (mobile-first, installable en PWA) pour apprendre à parler la
+Darija marocaine, du niveau débutant absolu jusqu'à la conversation. 100%
+gratuite, sans compte, sans publicité, sans abonnement.
 
-Ce repo est scaffoldé, mais **le build iOS doit être lancé depuis une
-machine qui a un accès réseau complet** (ton VPS, pas cette session Claude
-Code — voir "Pourquoi un VPS" plus bas).
+## Stack
 
-## Prérequis sur le VPS
+- **React + TypeScript + Vite** — build rapide, aucun serveur requis
+- **Tailwind CSS v4** — design mobile-first
+- **React Router** — navigation par pages
+- **vite-plugin-pwa** — installable et utilisable hors-ligne
+- **localStorage** — progression sauvegardée sur l'appareil, sans compte
+- **Web Speech API** — synthèse vocale gratuite intégrée au navigateur (aucune clé API)
 
-- Node.js 18+ et npm
-- Un compte [expo.dev](https://expo.dev)
-- Un compte Apple Developer
-
-## Étapes (depuis le terminal iPhone → VPS)
+## Démarrer en local
 
 ```bash
-# 1. Récupérer le code
-git clone <url-du-repo>
-cd Test-APP
-git checkout claude/ios-expo-vps-build-evlpiq
-
-# 2. Installer les dépendances
 npm install
-
-# 3. Se connecter à Expo (garde eas-cli en local au projet, pas besoin d'install globale)
-npx eas-cli login
-# ou, sans interaction (recommandé en headless) :
-export EXPO_TOKEN="ton_access_token_expo.dev"
-
-# 4. Config des credentials Apple (première fois seulement)
-npx eas-cli credentials
-# Choisis iOS -> laisse EAS gérer automatiquement certificats + provisioning profile.
-# Recommandé : utilise une clé API App Store Connect (.p8) plutôt que login
-# Apple ID + 2FA interactif, plus fiable en headless.
-# App Store Connect -> Users and Access -> Integrations -> Team Keys
-
-# 5. Lancer le build (profil "development" = dev client, distribution interne)
-npx eas-cli build --platform ios --profile development
-
-# 6. Suivre l'avancement et récupérer le lien d'install sur expo.dev,
-#    ou scanner le QR code affiché dans le terminal.
+npm run dev       # serveur de développement
+npm run build      # build de production dans dist/
+npm run preview    # tester le build de production
+npm run lint        # vérifie le code avec oxlint
 ```
 
-### Utilisation au quotidien une fois le dev client installé
+## Architecture
 
-```bash
-npx expo start --dev-client
+```
+src/
+  types/            Types TypeScript du modèle de contenu pédagogique
+  data/              Tout le contenu : vocabulary.ts, phrases.ts, verbs.ts,
+                     grammar.ts, conversations.ts, lessons.ts, categories.ts
+                     (séparé de l'UI, facilement extensible)
+  lib/               Logique : storage (localStorage), srs (répétition
+                     espacée), tts (synthèse vocale), quizGen (génération
+                     d'exercices), types
+  context/           ProgressContext — état de progression global (XP, série
+                     de jours, favoris, SRS, statistiques)
+  components/        Composants réutilisables (Layout, AudioButton,
+                     FlashCard, QuizRunner, FavoriteButton, ProgressBar)
+  pages/             Une page par écran (Accueil, Apprendre, Vocabulaire,
+                     Conversations, Écouter, Exercices, Révisions, Progrès,
+                     Dictionnaire, Favoris, Recherche, Je suis au Maroc,
+                     Je veux parler, Je veux comprendre)
 ```
 
-Scanne le QR code (ou ouvre le lien) depuis l'app DevClient installée sur
-ton iPhone. Ça recharge le bundle JS en direct — pas besoin de rebuilder
-tant que tu ne touches pas au code natif / aux dépendances natives.
+### Ajouter du contenu
 
-## Pourquoi passer par un VPS et pas directement par cette session ?
+Le contenu (mots, phrases, verbes, grammaire, conversations, leçons) est
+entièrement séparé du code d'interface dans `src/data/`. Pour ajouter des
+mots, des phrases ou des leçons, il suffit d'ajouter des entrées dans ces
+fichiers — aucune autre partie de l'application n'a besoin d'être modifiée.
+Les leçons référencent le contenu dynamiquement (par catégorie ou par index)
+plutôt que par identifiants codés en dur, pour rester robustes quand le
+contenu grandit.
 
-Cet environnement Claude Code applique une politique réseau qui bloque
-les appels sortants vers `api.expo.dev`. Le scaffold, la config, et les
-commits/push fonctionnent très bien ici, mais `eas login` / `eas build`
-doivent être exécutés depuis une machine avec un accès réseau complet
-— typiquement ton VPS.
+### État actuel du contenu (V1)
 
-## Bundle identifier
+- ~180 mots de vocabulaire sur 25 catégories
+- ~40 phrases de survie
+- 20 verbes conjugués (présent / passé / futur / négation)
+- 22 points de grammaire progressifs
+- 15 conversations réalistes avec quiz de compréhension
+- 35 leçons organisées en 8 niveaux (Découverte → Conversationnel)
 
-Actuellement configuré sur `com.redaperrin.devclient` dans `app.json`.
-Change-le avant ton premier build si tu veux autre chose (doit correspondre
-à un App ID que tu peux créer/posséder dans ton compte Apple Developer).
+C'est une base solide et vérifiée plutôt qu'un contenu gonflé
+artificiellement — l'architecture est prête pour ajouter des centaines
+d'entrées supplémentaires sans rien casser.
+
+## Déploiement
+
+L'application est 100% statique après build (`npm run build` → dossier
+`dist/`) : elle peut être déployée gratuitement sur Netlify, Vercel, GitHub
+Pages, Cloudflare Pages, ou tout hébergeur de fichiers statiques.
