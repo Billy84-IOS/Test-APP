@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Pressable, Text, View } from 'react-native'
 import { AudioButton } from './AudioButton'
 
 interface FlashCardProps {
@@ -13,45 +14,42 @@ export function FlashCard({ front, frontSub, back, onKnow, onDontKnow }: FlashCa
   const [flipped, setFlipped] = useState(false)
 
   return (
-    <div className="max-w-md mx-auto">
-      <button
-        type="button"
-        onClick={() => setFlipped((f) => !f)}
-        className="w-full min-h-56 bg-white border-2 border-sand-200 rounded-3xl flex flex-col items-center justify-center gap-3 p-6 text-center shadow-sm active:scale-[0.99] transition"
+    <View className="w-full max-w-md self-center">
+      <Pressable
+        onPress={() => setFlipped((f) => !f)}
+        className="w-full min-h-[220px] bg-white border-2 border-sand-200 rounded-3xl items-center justify-center gap-3 p-6"
       >
         {!flipped ? (
           <>
-            <p className="font-arabic text-3xl">{front}</p>
-            {frontSub && <p className="text-gray-400 text-sm">{frontSub}</p>}
-            <span className="text-xs text-gray-300 mt-2">Touche pour retourner</span>
+            <Text className="text-3xl text-center">{front}</Text>
+            {frontSub ? <Text className="text-gray-400 text-sm">{frontSub}</Text> : null}
+            <Text className="text-xs text-gray-300 mt-2">Touche pour retourner</Text>
           </>
         ) : (
-          <p className="text-2xl font-semibold text-brand-600">{back}</p>
+          <Text className="text-2xl font-semibold text-brand-600 text-center">{back}</Text>
         )}
-      </button>
+      </Pressable>
 
-      <div className="flex items-center justify-center mt-3">
+      <View className="items-center mt-3">
         <AudioButton text={front} />
-      </div>
+      </View>
 
       {flipped && (
-        <div className="flex gap-3 mt-5">
-          <button
-            type="button"
-            onClick={onDontKnow}
-            className="flex-1 py-3 rounded-2xl bg-white border border-sand-200 text-gray-600 font-semibold active:scale-95 transition"
+        <View className="flex-row gap-3 mt-5">
+          <Pressable
+            onPress={onDontKnow}
+            className="flex-1 py-3 rounded-2xl bg-white border border-sand-200 items-center active:opacity-70"
           >
-            😕 Je ne connais pas
-          </button>
-          <button
-            type="button"
-            onClick={onKnow}
-            className="flex-1 py-3 rounded-2xl bg-teal-500 text-white font-semibold active:scale-95 transition"
+            <Text className="text-gray-600 font-semibold">😕 Je ne connais pas</Text>
+          </Pressable>
+          <Pressable
+            onPress={onKnow}
+            className="flex-1 py-3 rounded-2xl bg-teal-500 items-center active:opacity-70"
           >
-            ✅ Je connais
-          </button>
-        </div>
+            <Text className="text-white font-semibold">✅ Je connais</Text>
+          </Pressable>
+        </View>
       )}
-    </div>
+    </View>
   )
 }

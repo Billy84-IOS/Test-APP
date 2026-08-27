@@ -1,37 +1,34 @@
 import { useState } from 'react'
-import { speak, isTtsAvailable } from '../lib/tts'
+import { Pressable, Text, View } from 'react-native'
+import { speak } from '../lib/tts'
 
 export function AudioButton({ text, size = 'md' }: { text: string; size?: 'sm' | 'md' | 'lg' }) {
   const [playing, setPlaying] = useState(false)
-  const dims = size === 'sm' ? 'w-8 h-8 text-sm' : size === 'lg' ? 'w-14 h-14 text-2xl' : 'w-10 h-10 text-base'
+  const dims = size === 'sm' ? 'w-8 h-8' : size === 'lg' ? 'w-14 h-14' : 'w-10 h-10'
+  const emojiSize = size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-2xl' : 'text-base'
 
-  if (!isTtsAvailable()) return null
-
-  const handleClick = (rate: 'normal' | 'lent') => {
+  const handlePress = (rate: 'normal' | 'lent') => {
     setPlaying(true)
     speak(text, rate)
-    window.setTimeout(() => setPlaying(false), 1200)
+    setTimeout(() => setPlaying(false), 1200)
   }
 
   return (
-    <div className="inline-flex items-center gap-1">
-      <button
-        type="button"
-        onClick={() => handleClick('normal')}
-        aria-label={`Écouter « ${text} »`}
-        className={`${dims} flex items-center justify-center rounded-full bg-teal-500 text-white hover:bg-teal-600 active:scale-95 transition ${playing ? 'animate-pulse' : ''}`}
+    <View className="flex-row items-center gap-1">
+      <Pressable
+        onPress={() => handlePress('normal')}
+        accessibilityLabel={`Écouter ${text}`}
+        className={`${dims} rounded-full bg-teal-500 items-center justify-center active:opacity-70 ${playing ? 'opacity-70' : ''}`}
       >
-        🔊
-      </button>
-      <button
-        type="button"
-        onClick={() => handleClick('lent')}
-        aria-label={`Écouter « ${text} » lentement`}
-        title="Écouter lentement"
-        className="w-7 h-7 flex items-center justify-center rounded-full bg-sand-200 text-teal-700 hover:bg-sand-100 active:scale-95 transition text-xs"
+        <Text className={emojiSize}>🔊</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => handlePress('lent')}
+        accessibilityLabel={`Écouter ${text} lentement`}
+        className="w-7 h-7 rounded-full bg-sand-200 items-center justify-center active:opacity-70"
       >
-        🐢
-      </button>
-    </div>
+        <Text className="text-xs">🐢</Text>
+      </Pressable>
+    </View>
   )
 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Pressable, Text, TextInput, View } from 'react-native'
 import type { QuizQuestion } from '../types'
 import { speak } from '../lib/tts'
 import { useProgress } from '../context/ProgressContext'
@@ -20,19 +21,22 @@ export function QuizRunner({ questions, onFinish }: { questions: QuizQuestion[];
   const [reorderPicked, setReorderPicked] = useState<string[]>([])
 
   const question = questions[index]
-  const shuffledWords = useMemo(() => (question?.words ? [...question.words].sort(() => (question.words!.indexOf(question.words![0]) % 2 ? 1 : -1)) : []), [question])
+  const shuffledWords = useMemo(
+    () => (question?.words ? [...question.words].sort(() => (question.words!.indexOf(question.words![0]) % 2 ? 1 : -1)) : []),
+    [question],
+  )
 
   if (questions.length === 0) {
-    return <p className="text-gray-400 text-sm py-6">Aucun exercice disponible pour cette section pour le moment.</p>
+    return <Text className="text-gray-400 text-sm py-6">Aucun exercice disponible pour cette section pour le moment.</Text>
   }
 
   if (index >= questions.length) {
     return (
-      <div className="text-center py-10">
-        <p className="text-5xl mb-3">🎉</p>
-        <p className="text-xl font-bold mb-1">Terminé !</p>
-        <p className="text-gray-500">Score : {score} / {questions.length}</p>
-      </div>
+      <View className="items-center py-10">
+        <Text className="text-5xl mb-3">🎉</Text>
+        <Text className="text-xl font-bold mb-1">Terminé !</Text>
+        <Text className="text-gray-500">Score : {score} / {questions.length}</Text>
+      </View>
     )
   }
 
@@ -40,7 +44,7 @@ export function QuizRunner({ questions, onFinish }: { questions: QuizQuestion[];
     recordQuizAnswer(correct)
     const nextScore = score + (correct ? 1 : 0)
     setScore(nextScore)
-    window.setTimeout(() => {
+    setTimeout(() => {
       setSelected(null)
       setTyped('')
       setRevealed(false)
@@ -69,116 +73,104 @@ export function QuizRunner({ questions, onFinish }: { questions: QuizQuestion[];
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6">
-      <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
-        <span>Question {index + 1} / {questions.length}</span>
-        <span>Score : {score}</span>
-      </div>
+    <View className="w-full max-w-lg self-center px-4 py-6">
+      <View className="flex-row justify-between mb-4">
+        <Text className="text-xs text-gray-400">Question {index + 1} / {questions.length}</Text>
+        <Text className="text-xs text-gray-400">Score : {score}</Text>
+      </View>
 
-      <div className="bg-white rounded-2xl border border-sand-200 p-5 mb-4">
-        <p className="font-semibold text-lg mb-1">{question.prompt}</p>
+      <View className="bg-white rounded-2xl border border-sand-200 p-5 mb-4">
+        <Text className="font-semibold text-lg mb-1">{question.prompt}</Text>
         {question.promptAudio && (
-          <button
-            type="button"
-            onClick={() => speak(question.promptAudio!.tts)}
-            className="mt-2 text-sm text-teal-600 flex items-center gap-1"
-          >
-            🔊 Écouter
-          </button>
+          <Pressable onPress={() => speak(question.promptAudio!.tts)} className="mt-2 flex-row items-center gap-1">
+            <Text className="text-sm text-teal-600">🔊 Écouter</Text>
+          </Pressable>
         )}
-      </div>
+      </View>
 
       {CHOICE_TYPES.includes(question.type) && question.choices && (
-        <div className="grid gap-2">
+        <View className="gap-2">
           {question.choices.map((choice) => {
             const isSelected = selected === choice
             const isCorrect = choice === question.correctAnswer
             const showState = selected !== null
+            const bg = showState && isCorrect ? 'bg-green-50 border-green-400' : showState && isSelected ? 'bg-red-50 border-red-400' : 'bg-white border-sand-200'
+            const textColor = showState && isCorrect ? 'text-green-700' : showState && isSelected ? 'text-red-700' : 'text-gray-800'
             return (
-              <button
+              <Pressable
                 key={choice}
-                type="button"
                 disabled={selected !== null}
-                onClick={() => handleChoice(choice)}
-                className={`text-left px-4 py-3 rounded-xl border transition font-medium ${
-                  showState && isCorrect
-                    ? 'bg-green-50 border-green-400 text-green-700'
-                    : showState && isSelected
-                      ? 'bg-red-50 border-red-400 text-red-700'
-                      : 'bg-white border-sand-200 hover:border-brand-400'
-                }`}
+                onPress={() => handleChoice(choice)}
+                className={`px-4 py-3 rounded-xl border ${bg}`}
               >
-                {choice}
-              </button>
+                <Text className={`font-medium ${textColor}`}>{choice}</Text>
+              </Pressable>
             )
           })}
-        </div>
+        </View>
       )}
 
       {question.type === 'reorder' && question.words && (
-        <div>
-          <div className="min-h-12 flex flex-wrap gap-2 mb-4 p-3 bg-white rounded-xl border border-sand-200">
+        <View>
+          <View className="min-h-[48px] flex-row flex-wrap gap-2 mb-4 p-3 bg-white rounded-xl border border-sand-200">
             {reorderPicked.map((w, i) => (
-              <span key={i} className="px-3 py-1.5 bg-brand-50 text-brand-600 rounded-lg text-sm font-medium">{w}</span>
+              <View key={i} className="px-3 py-1.5 bg-brand-50 rounded-lg">
+                <Text className="text-brand-600 text-sm font-medium">{w}</Text>
+              </View>
             ))}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {shuffledWords.map((w, i) => (
-              <button
-                key={i}
-                type="button"
-                disabled={reorderPicked.includes(w) || revealed}
-                onClick={() => handleReorderWord(w)}
-                className="px-3 py-1.5 bg-sand-100 rounded-lg text-sm font-medium disabled:opacity-30"
-              >
-                {w}
-              </button>
-            ))}
-          </div>
-          {revealed && <p className="mt-3 text-sm text-gray-500">Réponse : {question.correctAnswer}</p>}
-        </div>
+          </View>
+          <View className="flex-row flex-wrap gap-2">
+            {shuffledWords.map((w, i) => {
+              const used = reorderPicked.includes(w) || revealed
+              return (
+                <Pressable key={i} disabled={used} onPress={() => handleReorderWord(w)} className={`px-3 py-1.5 bg-sand-100 rounded-lg ${used ? 'opacity-30' : ''}`}>
+                  <Text className="text-sm font-medium">{w}</Text>
+                </Pressable>
+              )
+            })}
+          </View>
+          {revealed && <Text className="mt-3 text-sm text-gray-500">Réponse : {question.correctAnswer}</Text>}
+        </View>
       )}
 
       {TYPE_TYPES.includes(question.type) && (
-        <div>
-          <input
-            type="text"
+        <View>
+          <TextInput
             value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            disabled={revealed}
+            onChangeText={setTyped}
+            editable={!revealed}
             placeholder="Écris ta réponse..."
-            className="w-full px-4 py-3 rounded-xl border border-sand-200 mb-3 focus:outline-none focus:ring-2 focus:ring-brand-400"
+            className="w-full px-4 py-3 rounded-xl border border-sand-200 mb-3 bg-white"
           />
           {!revealed ? (
-            <button
-              type="button"
-              onClick={() => setRevealed(true)}
+            <Pressable
+              onPress={() => setRevealed(true)}
               disabled={typed.trim().length === 0}
-              className="px-4 py-2 bg-brand-500 text-white rounded-xl font-medium disabled:opacity-40"
+              className={`px-4 py-2.5 rounded-xl self-start ${typed.trim().length === 0 ? 'bg-brand-500 opacity-40' : 'bg-brand-500'}`}
             >
-              Vérifier
-            </button>
+              <Text className="text-white font-medium">Vérifier</Text>
+            </Pressable>
           ) : (
-            <div>
-              <p className={`text-sm font-medium mb-2 ${normalize(typed) === normalize(question.correctAnswer) ? 'text-green-600' : 'text-amber-600'}`}>
+            <View>
+              <Text className={`text-sm font-medium mb-2 ${normalize(typed) === normalize(question.correctAnswer) ? 'text-green-600' : 'text-amber-600'}`}>
                 Réponse attendue : {question.correctAnswer}
-              </p>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => advance(true)} className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-medium">
-                  J'avais juste
-                </button>
-                <button type="button" onClick={() => advance(false)} className="px-4 py-2 bg-sand-200 text-gray-600 rounded-xl text-sm font-medium">
-                  Je me suis trompé
-                </button>
-              </div>
-            </div>
+              </Text>
+              <View className="flex-row gap-2">
+                <Pressable onPress={() => advance(true)} className="px-4 py-2 bg-green-500 rounded-xl">
+                  <Text className="text-white text-sm font-medium">J'avais juste</Text>
+                </Pressable>
+                <Pressable onPress={() => advance(false)} className="px-4 py-2 bg-sand-200 rounded-xl">
+                  <Text className="text-gray-600 text-sm font-medium">Je me suis trompé</Text>
+                </Pressable>
+              </View>
+            </View>
           )}
-        </div>
+        </View>
       )}
 
       {question.explanation && selected && (
-        <p className="mt-3 text-sm text-gray-500 bg-sand-100 rounded-xl p-3">{question.explanation}</p>
+        <Text className="mt-3 text-sm text-gray-500 bg-sand-100 rounded-xl p-3">{question.explanation}</Text>
       )}
-    </div>
+    </View>
   )
 }

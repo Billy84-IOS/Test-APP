@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Darija",
+    "slug": "darija-app",
+    "version": "1.0.0",
+    "scheme": "darija",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.redaperrin.darija"
+    },
+    "android": {
+      "package": "com.redaperrin.darija",
+      "adaptiveIcon": {
+        "backgroundColor": "#c1272d",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-dev-client"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

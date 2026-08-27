@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { View, ActivityIndicator } from 'react-native'
 import type { DailyGoal, OnboardingGoal, OnboardingLevel, UserProgress } from '../lib/types'
 import { loadProgress, saveProgress } from '../lib/storage'
 import { createSrsEntry, reviewSrsEntry } from '../lib/srs'
@@ -16,7 +17,6 @@ interface ProgressContextValue {
   recordQuizAnswer: (correct: boolean) => void
   reviewItem: (itemId: string, itemType: SrsEntry['itemType'], known: boolean) => void
   addTimeSpent: (minutes: number) => void
-  resetProgress: () => void
 }
 
 const ProgressContext = createContext<ProgressContextValue | null>(null)
@@ -33,65 +33,85 @@ function isYesterday(dateIso: string) {
 }
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
-  const [progress, setProgress] = useState<UserProgress>(() => loadProgress())
+  const [progress, setProgress] = useState<UserProgress | null>(null)
 
-  // Calcule la série de jours consécutifs au montage de l'app.
+  // Chargement initial depuis AsyncStorage, puis calcul de la série de jours.
   useEffect(() => {
-    setProgress((prev) => {
+    loadProgress().then((loaded) => {
       const today = todayIso()
-      if (prev.lastActiveDate === today) return prev
-      const streakDays = prev.lastActiveDate && isYesterday(prev.lastActiveDate) ? prev.streakDays + 1 : prev.lastActiveDate ? 1 : prev.streakDays
-      return { ...prev, lastActiveDate: today, streakDays }
+      if (loaded.lastActiveDate === today) {
+        setProgress(loaded)
+        return
+      }
+      const streakDays = loaded.lastActiveDate && isYesterday(loaded.lastActiveDate)
+        ? loaded.streakDays + 1
+        : loaded.lastActiveDate
+          ? 1
+          : loaded.streakDays
+      setProgress({ ...loaded, lastActiveDate: today, streakDays })
     })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    saveProgress(progress)
+    if (progress) saveProgress(progress)
   }, [progress])
 
-  const value = useMemo<ProgressContextValue>(
-    () => ({
+  const value = useMemo<ProgressContextValue | null>(() => {
+    if (!progress) return null
+    return {
       progress,
       completeOnboarding: (level, goal, dailyGoalMinutes) =>
-        setProgress((p) => ({ ...p, onboarded: true, level, goal, dailyGoalMinutes })),
-      addXp: (amount) => setProgress((p) => ({ ...p, xp: p.xp + amount })),
+        setProgress((p) => (p ? { ...p, onboarded: true, level, goal, dailyGoalMinutes } : p)),
+      addXp: (amount) => setProgress((p) => (p ? { ...p, xp: p.xp + amount } : p)),
       completeLesson: (lessonId, xp = 20) =>
-        setProgress((p) =>
-          p.completedLessonIds.includes(lessonId)
+        setProgress((p) => {
+          if (!p) return p
+          return p.completedLessonIds.includes(lessonId)
             ? { ...p, xp: p.xp + Math.round(xp / 2) }
-            : { ...p, xp: p.xp + xp, completedLessonIds: [...p.completedLessonIds, lessonId] },
-        ),
+            : { ...p, xp: p.xp + xp, completedLessonIds: [...p.completedLessonIds, lessonId] }
+        }),
       toggleFavorite: (kind, itemId) =>
         setProgress((p) => {
+          if (!p) return p
           const list = p.favorites[kind]
           const next = list.includes(itemId) ? list.filter((id) => id !== itemId) : [...list, itemId]
           return { ...p, favorites: { ...p.favorites, [kind]: next } }
         }),
       isFavorite: (kind, itemId) => progress.favorites[kind].includes(itemId),
       recordQuizAnswer: (correct) =>
-        setProgress((p) => ({
-          ...p,
-          xp: p.xp + (correct ? 2 : 0),
-          stats: {
-            ...p.stats,
-            quizzesTaken: p.stats.quizzesTaken + 1,
-            correctAnswers: p.stats.correctAnswers + (correct ? 1 : 0),
-            totalAnswers: p.stats.totalAnswers + 1,
-          },
-        })),
+        setProgress((p) => {
+          if (!p) return p
+          return {
+            ...p,
+            xp: p.xp + (correct ? 2 : 0),
+            stats: {
+              ...p.stats,
+              quizzesTaken: p.stats.quizzesTaken + 1,
+              correctAnswers: p.stats.correctAnswers + (correct ? 1 : 0),
+              totalAnswers: p.stats.totalAnswers + 1,
+            },
+          }
+        }),
       reviewItem: (itemId, itemType, known) =>
         setProgress((p) => {
+          if (!p) return p
           const existing = p.srs[itemId] ?? createSrsEntry(itemId, itemType)
           const updated = reviewSrsEntry(existing, known)
           return { ...p, srs: { ...p.srs, [itemId]: updated }, xp: p.xp + (known ? 1 : 0) }
         }),
       addTimeSpent: (minutes) =>
-        setProgress((p) => ({ ...p, stats: { ...p.stats, timeSpentMinutes: p.stats.timeSpentMinutes + minutes } })),
-      resetProgress: () => setProgress(loadProgress()),
-    }),
-    [progress],
-  )
+        setProgress((p) => (p ? { ...p, stats: { ...p.stats, timeSpentMinutes: p.stats.timeSpentMinutes + minutes } } : p)),
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress])
+
+  if (!progress || !value) {
+    return (
+      <View className="flex-1 items-center justify-center bg-sand-50">
+        <ActivityIndicator size="large" color="#c1272d" />
+      </View>
+    )
+  }
 
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>
 }
