@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Darija",
-    "slug": "darija-app",
+    "slug": "darija-app-billybrok84",
     "version": "1.0.0",
     "scheme": "darija",
     "orientation": "portrait",
@@ -10,7 +10,17 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.redaperrin.darija"
+      "bundleIdentifier": "com.redaperrin.darija",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSExceptionDomains": {
+            "2.24.8.61": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSIncludesSubdomains": true
+            }
+          }
+        }
+      }
     },
     "android": {
       "package": "com.redaperrin.darija",
