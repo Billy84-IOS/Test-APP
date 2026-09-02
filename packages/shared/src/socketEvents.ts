@@ -1,4 +1,4 @@
-import type { GameType } from "./gameTypes";
+import type { GameType } from "./gameTypes.js";
 
 // Noms d'événements Socket.IO centralisés — jamais de chaîne en dur côté
 // client ou serveur, toujours importer depuis ici.

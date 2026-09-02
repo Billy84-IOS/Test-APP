@@ -1,4 +1,4 @@
-import type { GameType } from "./gameTypes";
+import type { GameType } from "./gameTypes.js";
 
 // DTOs échangés via l'API REST. Le détail (routes, validation) arrive en
 // Phase 2 (comptes) et Phase 3 (amis) — on pose seulement les formes de

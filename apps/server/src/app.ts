@@ -1,20 +1,28 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import type { Env } from "./env.js";
 import { prisma } from "./prisma.js";
+import { attachUser } from "./middleware/auth.js";
+import { createAuthRouter } from "./routes/auth.js";
+import { createProfileRouter } from "./routes/profile.js";
 
-// App Express : uniquement les fondations pour l'instant (healthcheck).
-// Les routes d'authentification arrivent en Phase 2, amis en Phase 3.
 export function createApp(env: Env) {
   const app = express();
+
+  // Derrière un reverse proxy (Phase 11), express doit faire confiance au
+  // X-Forwarded-For pour que le rate limiting compte les bonnes IP.
+  app.set("trust proxy", 1);
 
   app.use(
     cors({
       origin: env.CORS_ORIGIN,
-      credentials: true,
+      credentials: true, // nécessaire pour que le cookie de session circule
     }),
   );
-  app.use(express.json());
+  app.use(express.json({ limit: "100kb" }));
+  app.use(cookieParser());
+  app.use(attachUser(env));
 
   app.get("/health", async (_req, res) => {
     try {
@@ -24,6 +32,9 @@ export function createApp(env: Env) {
       res.status(503).json({ status: "error", db: "unreachable", error: String(err) });
     }
   });
+
+  app.use("/auth", createAuthRouter(env));
+  app.use("/profile", createProfileRouter(env));
 
   return app;
 }

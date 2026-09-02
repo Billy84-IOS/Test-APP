@@ -1,5 +1,8 @@
+import Link from "next/link";
+import { AppHeader } from "@/components/AppHeader";
 import { GameShowcaseCard } from "@/components/GameShowcaseCard";
 import { StatusPill } from "@/components/StatusPill";
+import { getSession } from "@/lib/session";
 
 interface HealthStatus {
   status: "ok" | "error";
@@ -58,28 +61,12 @@ const FEATURES = [
 ] as const;
 
 export default async function Home() {
-  const health = await getServerHealth();
+  const [health, session] = await Promise.all([getServerHealth(), getSession()]);
   const status = health === null ? "down" : health.status === "ok" ? "ok" : "degraded";
 
   return (
     <div className="felt-texture flex-1">
-      {/* Nav */}
-      <header className="border-b border-ink-800/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl" aria-hidden>
-              🃏
-            </span>
-            <span className="font-display text-lg font-semibold tracking-tight text-cream-100">
-              CardTable
-            </span>
-          </div>
-          <nav className="hidden items-center gap-8 text-sm text-cream-500 sm:flex">
-            <span>Jeux</span>
-            <span>Comment ça marche</span>
-          </nav>
-        </div>
-      </header>
+      <AppHeader displayName={session?.user.displayName ?? null} />
 
       {/* Hero */}
       <section className="mx-auto max-w-4xl px-6 pb-20 pt-20 text-center sm:pt-28">
@@ -99,10 +86,30 @@ export default async function Home() {
           jamais de mal.
         </p>
 
-        <div className="animate-rise mt-9 flex items-center justify-center gap-3">
-          <span className="cursor-not-allowed rounded-xl bg-gold-500/20 px-6 py-3 text-sm font-semibold text-gold-300 ring-1 ring-inset ring-gold-400/30">
-            Créer un compte — bientôt disponible
-          </span>
+        <div className="animate-rise mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          {session ? (
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-gold-500 px-6 py-3 text-sm font-semibold text-ink-950 shadow-glow-gold transition-colors hover:bg-gold-400 sm:w-auto"
+            >
+              Aller à mon tableau de bord
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/inscription"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-gold-500 px-6 py-3 text-sm font-semibold text-ink-950 shadow-glow-gold transition-colors hover:bg-gold-400 sm:w-auto"
+              >
+                Créer un compte
+              </Link>
+              <Link
+                href="/connexion"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-cream-300 ring-1 ring-inset ring-ink-600 transition-colors hover:bg-ink-800 hover:text-cream-100 sm:w-auto"
+              >
+                J&apos;ai déjà un compte
+              </Link>
+            </>
+          )}
         </div>
       </section>
 
@@ -137,7 +144,7 @@ export default async function Home() {
       {/* Footer */}
       <footer className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-6 py-10 text-center sm:flex-row sm:justify-between sm:text-left">
         <p className="text-sm text-cream-500">
-          🃏 CardTable — <span className="text-cream-300">Phase 1</span> : fondations
+          🃏 CardTable — <span className="text-cream-300">Phase 2</span> : comptes
         </p>
         <StatusPill status={status} />
       </footer>

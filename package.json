@@ -3,14 +3,18 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "dev:web": "pnpm --filter @cardtable/web dev",
-    "dev:server": "pnpm --filter @cardtable/server dev",
+    "build:shared": "pnpm --filter @cardtable/shared build",
+    "dev:web": "pnpm build:shared && pnpm --filter @cardtable/web dev",
+    "dev:server": "pnpm build:shared && pnpm --filter @cardtable/server dev",
     "build": "pnpm -r build",
+    "start:server": "pnpm --filter @cardtable/server start",
+    "start:web": "pnpm --filter @cardtable/web start",
     "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
+    "typecheck": "pnpm build:shared && pnpm -r typecheck",
+    "test": "pnpm build:shared && pnpm -r test",
     "db:generate": "pnpm --filter @cardtable/server prisma generate",
-    "db:migrate": "pnpm --filter @cardtable/server prisma migrate dev"
+    "db:migrate": "pnpm --filter @cardtable/server prisma migrate dev",
+    "db:deploy": "pnpm --filter @cardtable/server prisma migrate deploy"
   },
   "engines": {
     "node": ">=20"
