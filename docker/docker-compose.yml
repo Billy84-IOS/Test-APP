@@ -1,0 +1,23 @@
+# Compose de développement : uniquement PostgreSQL. Les apps (web, server)
+# tournent en local via pnpm pour garder le hot-reload rapide. Le compose de
+# production (Phase 11) conteneurise tout, avec Caddy en reverse proxy.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cardtable
+      POSTGRES_PASSWORD: cardtable
+      POSTGRES_DB: cardtable
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cardtable -d cardtable"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

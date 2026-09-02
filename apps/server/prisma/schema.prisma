@@ -1,0 +1,152 @@
+// Schéma de fondations (Phase 1). Les modèles liés aux parties (GameSession,
+// GamePlayer, GameInvite, ChatMessage) sont posés dès maintenant car les
+// autres phases en dépendent, mais aucune logique de jeu n'est implémentée
+// ici — voir packages/game-engine (Phase 5+).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  avatarUrl    String?
+  xp           Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  sessions       Session[]
+  stats          GameTypeStats[]
+  friendshipsOut Friendship[]    @relation("Requester")
+  friendshipsIn  Friendship[]    @relation("Addressee")
+  gamePlayers    GamePlayer[]
+  invitesSent    GameInvite[]    @relation("InviteFrom")
+  invitesGot     GameInvite[]    @relation("InviteTo")
+  chatMessages   ChatMessage[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum GameType {
+  PRESIDENT
+  KEMS
+  RAMI
+  HUIT_AMERICAIN
+}
+
+model GameTypeStats {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameType GameType
+  played   Int      @default(0)
+  wins     Int      @default(0)
+  losses   Int      @default(0)
+
+  @@unique([userId, gameType])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model Friendship {
+  id          String           @id @default(cuid())
+  requesterId String
+  requester   User             @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId String
+  addressee   User             @relation("Addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+
+  @@unique([requesterId, addresseeId])
+}
+
+enum GameSessionStatus {
+  LOBBY
+  IN_PROGRESS
+  FINISHED
+}
+
+model GameSession {
+  id            String            @id @default(cuid())
+  code          String            @unique
+  gameType      GameType
+  status        GameSessionStatus @default(LOBBY)
+  hostId        String
+  minPlayers    Int
+  maxPlayers    Int
+  config        Json              @default("{}")
+  stateSnapshot Json?
+  createdAt     DateTime          @default(now())
+  finishedAt    DateTime?
+
+  players      GamePlayer[]
+  invites      GameInvite[]
+  chatMessages ChatMessage[]
+}
+
+enum PlayerConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  LEFT
+}
+
+model GamePlayer {
+  id            String                 @id @default(cuid())
+  gameSessionId String
+  gameSession   GameSession            @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seatIndex     Int
+  team          Int?
+  status        PlayerConnectionStatus @default(CONNECTED)
+  joinedAt      DateTime               @default(now())
+
+  @@unique([gameSessionId, userId])
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model GameInvite {
+  id            String       @id @default(cuid())
+  gameSessionId String
+  gameSession   GameSession  @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  fromUserId    String
+  fromUser      User         @relation("InviteFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId      String
+  toUser        User         @relation("InviteTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  status        InviteStatus @default(PENDING)
+  createdAt     DateTime     @default(now())
+}
+
+model ChatMessage {
+  id            String      @id @default(cuid())
+  gameSessionId String
+  gameSession   GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  content       String
+  createdAt     DateTime    @default(now())
+}
