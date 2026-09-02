@@ -1,10 +1,85 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------
+   Système de design CardTable — identité "table de cartes premium".
+   Fond très sombre à dominante verte (feutrine), accents or (premium) et
+   rouge carte à jouer, typographie display en serif pour le côté "salon
+   de jeu" + sans-serif moderne pour le reste de l'interface.
+   --------------------------------------------------------------------- */
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
+
+  /* Fond / surfaces — décliné du plus profond au plus élevé */
+  --color-ink-950: #0a0d0b;
+  --color-ink-900: #101512;
+  --color-ink-850: #141b17;
+  --color-ink-800: #182019;
+  --color-ink-700: #212b24;
+  --color-ink-600: #2c3830;
+
+  /* Feutrine — couleur de marque principale */
+  --color-felt-700: #0b4a32;
+  --color-felt-600: #0f6b47;
+  --color-felt-500: #14814f;
+  --color-felt-400: #1d9a61;
+  --color-felt-300: #4fb787;
+
+  /* Or — accent premium (CTA, bordures, highlights) */
+  --color-gold-600: #a9822a;
+  --color-gold-500: #d4af37;
+  --color-gold-400: #e4c665;
+  --color-gold-300: #f0da96;
+
+  /* Rouge carte — accent secondaire (cœur/carreau, alertes douces) */
+  --color-ruby-600: #9c2030;
+  --color-ruby-500: #c0293c;
+  --color-ruby-400: #e0475a;
+
+  /* Texte */
+  --color-cream-100: #f5f1e6;
+  --color-cream-300: #d8d2c2;
+  --color-cream-500: #a6a190;
+
+  --shadow-glow-gold: 0 0 0 1px rgba(212, 175, 55, 0.25), 0 8px 30px -8px rgba(212, 175, 55, 0.35);
+  --shadow-glow-felt: 0 0 0 1px rgba(29, 154, 97, 0.25), 0 8px 30px -8px rgba(20, 129, 79, 0.45);
 }
 
 body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background: var(--color-ink-950);
+  color: var(--color-cream-100);
+}
+
+/* Motif décoratif très discret évoquant le feutre d'une table de jeu */
+.felt-texture {
+  background-image:
+    radial-gradient(circle at 20% 15%, rgba(29, 154, 97, 0.16), transparent 45%),
+    radial-gradient(circle at 85% 0%, rgba(212, 175, 55, 0.10), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(15, 107, 71, 0.14), transparent 55%);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--color-gold-300), var(--color-gold-500) 60%, var(--color-gold-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-rise {
+    animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
